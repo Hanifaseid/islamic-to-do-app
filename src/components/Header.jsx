@@ -1,116 +1,169 @@
 // src/components/Header.jsx
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import {
+  Moon,
+  Sun,
+  Menu,
+  X,
+  Home,
+  CheckSquare,
+  Info,
+  Star
+} from "lucide-react";
 
 export default function Header() {
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // theme: init from localStorage or prefers-color-scheme
   const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("darkMode") === "true";
+    const saved = localStorage.getItem("darkMode");
+    if (saved != null) return JSON.parse(saved);
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
 
+  // apply theme class and persist
   useEffect(() => {
-    localStorage.setItem("darkMode", darkMode);
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    localStorage.setItem("darkMode", JSON.stringify(darkMode));
+    if (darkMode) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
   }, [darkMode]);
 
-  const links = [
-    { name: "Home", path: "/" },
-    { name: "Tasks", path: "/tasks" },
-    { name: "About", path: "/about" },
+  // scroll handler — only toggles scrolled state (no theme changes)
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const toggleDarkMode = () => setDarkMode((v) => !v);
+  const closeMobileMenu = () => setMenuOpen(false);
+
+  const navLinks = [
+    { name: "Home", path: "/", icon: Home, description: "Welcome to your spiritual journey" },
+    { name: "Tasks", path: "/tasks", icon: CheckSquare, description: "Manage your daily tasks" },
+    { name: "About", path: "/about", icon: Info, description: "Learn about our mission" }
   ];
 
+  // choose header background based on theme only
+  const headerBgClass = darkMode
+    ? "bg-gray-900 text-white"                         // dark theme header
+    : "bg-gradient-to-r from-green-600 to-emerald-600 text-white"; // light gradient header
+
   return (
-    <header className="bg-green-700 text-white shadow-lg dark:bg-gray-800">
-      <div className="container mx-auto flex justify-between items-center p-4">
-        <h1 className="text-2xl font-bold">🌙 Islamic To-Do App</h1>
+    <>
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${headerBgClass} ${
+          scrolled ? "backdrop-blur-sm shadow-2xl border-b border-gray-200/10 dark:border-gray-700/30" : ""
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 lg:h-20">
+            {/* Logo */}
+            <div className="flex items-center space-x-3 lg:space-x-4">
+              <div className={`relative rounded-2xl p-2 ${darkMode ? "bg-gray-800/60" : "bg-white/10"}`}>
+                <Star className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex flex-col">
+                <h1 className={`font-bold ${scrolled ? "text-lg lg:text-xl" : "text-xl lg:text-2xl"}`}>
+                  Islamic Tasks
+                </h1>
+                <p className="text-xs hidden sm:block text-white/80">Spiritual Productivity Companion</p>
+              </div>
+            </div>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex space-x-6">
-          {links.map((link) => (
-            <NavLink
-              key={link.path}
-              to={link.path}
-              className={({ isActive }) =>
-                `hover:text-yellow-300 transition ${
-                  isActive ? "text-yellow-300" : ""
-                }`
-              }
-            >
-              {link.name}
-            </NavLink>
-          ))}
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="py-1 px-3 rounded bg-white text-green-700 font-semibold hover:bg-gray-200 transition"
-          >
-            {darkMode ? "Light Mode" : "Dark Mode"}
-          </button>
-        </nav>
+            {/* Desktop nav */}
+            <nav className="hidden lg:flex items-center space-x-2">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                const isActive = location.pathname === link.path;
+                return (
+                  <NavLink
+                    key={link.path}
+                    to={link.path}
+                    className={`group relative flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 font-medium mx-1
+                      ${isActive ? (darkMode ? "bg-white/8 text-green-300" : "bg-white/20 text-white") : "text-white/90 hover:bg-white/10"}
+                    `}
+                  >
+                    <Icon size={16} className="flex-shrink-0" />
+                    <span>{link.name}</span>
+                    {isActive && <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-6 h-1 rounded-full bg-yellow-300" />}
+                  </NavLink>
+                );
+              })}
 
-        {/* Mobile menu button */}
-        <div className="md:hidden flex items-center">
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="focus:outline-none"
-          >
-            <svg
-              className="w-6 h-6 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {menuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile menu */}
-      {menuOpen && (
-        <div className="md:hidden bg-green-600 dark:bg-gray-900 text-white">
-          <nav className="flex flex-col p-4 space-y-2">
-            {links.map((link) => (
-              <NavLink
-                key={link.path}
-                to={link.path}
-                onClick={() => setMenuOpen(false)}
-                className={({ isActive }) =>
-                  `hover:text-yellow-300 transition ${
-                    isActive ? "text-yellow-300" : ""
-                  }`
-                }
+              {/* Theme switch (desktop) */}
+              <button
+                onClick={toggleDarkMode}
+                aria-label="Toggle theme"
+                className="ml-3 relative w-14 h-7 flex items-center rounded-full p-1 transition-transform shadow-lg bg-white/10"
               >
-                {link.name}
-              </NavLink>
-            ))}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="py-1 px-3 rounded bg-white text-green-700 font-semibold hover:bg-gray-200 transition mt-2"
-            >
-              {darkMode ? "Light Mode" : "Dark Mode"}
-            </button>
-          </nav>
+                <div
+                  className={`w-6 h-6 rounded-full bg-white flex items-center justify-center transform transition-all duration-300 ${
+                    darkMode ? "translate-x-7 bg-gray-800 text-yellow-300" : "translate-x-0 bg-yellow-300 text-white"
+                  }`}
+                >
+                  {darkMode ? <Moon size={12} /> : <Sun size={12} />}
+                </div>
+              </button>
+            </nav>
+
+            {/* Mobile controls */}
+            <div className="flex lg:hidden items-center space-x-3">
+              <button
+                onClick={toggleDarkMode}
+                className="p-2 rounded-lg bg-white/10 text-white/90 hover:scale-105 transition"
+                aria-label="Toggle theme"
+              >
+                {darkMode ? <Moon size={18} /> : <Sun size={18} />}
+              </button>
+
+              <button
+                onClick={() => setMenuOpen((s) => !s)}
+                className="p-2 rounded-lg bg-white/10 text-white/90 hover:scale-105 transition"
+                aria-label="Toggle menu"
+              >
+                {menuOpen ? <X size={22} /> : <Menu size={22} />}
+              </button>
+            </div>
+          </div>
         </div>
-      )}
-    </header>
+
+        {/* Mobile menu */}
+        <div
+          className={`lg:hidden ${menuOpen ? "block" : "hidden"} px-4 pb-6 bg-opacity-90`}
+          role="menu"
+        >
+          <div className="px-2 pt-4 space-y-3">
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = location.pathname === link.path;
+              return (
+                <NavLink
+                  key={link.path}
+                  to={link.path}
+                  onClick={closeMobileMenu}
+                  className={`flex items-center space-x-3 p-3 rounded-2xl transition ${isActive ? "bg-white/10 text-white" : "text-white/90 hover:bg-white/5"}`}
+                >
+                  <div className={`p-2 rounded-xl ${isActive ? "bg-green-500 text-white" : "bg-white/10 text-white/80"}`}>
+                    <Icon size={18} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-base">{link.name}</div>
+                    <div className="text-sm text-white/70 mt-1">{link.description}</div>
+                  </div>
+                </NavLink>
+              );
+            })}
+          </div>
+        </div>
+      </header>
+
+      {/* spacer so content doesn't hide under fixed header */}
+      <div className="h-16 lg:h-20" />
+    </>
   );
 }
