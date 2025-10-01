@@ -1,4 +1,3 @@
-// src/components/Header.jsx
 import { NavLink, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
@@ -12,34 +11,19 @@ import {
   Star
 } from "lucide-react";
 
-export default function Header() {
+export default function Header({ darkMode, toggleDarkMode }) {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // theme: init from localStorage or prefers-color-scheme
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem("darkMode");
-    if (saved != null) return JSON.parse(saved);
-    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  });
-
-  // apply theme class and persist
+  // scroll effect for shadow/backdrop (does NOT toggle theme)
   useEffect(() => {
-    localStorage.setItem("darkMode", JSON.stringify(darkMode));
-    if (darkMode) document.documentElement.classList.add("dark");
-    else document.documentElement.classList.remove("dark");
-  }, [darkMode]);
-
-  // scroll handler — only toggles scrolled state (no theme changes)
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const toggleDarkMode = () => setDarkMode((v) => !v);
   const closeMobileMenu = () => setMenuOpen(false);
 
   const navLinks = [
@@ -48,20 +32,17 @@ export default function Header() {
     { name: "About", path: "/about", icon: Info, description: "Learn about our mission" }
   ];
 
-  // choose header background based on theme only
-  const headerBgClass = darkMode
-    ? "bg-gray-900 text-white"                         // dark theme header
-    : "bg-gradient-to-r from-green-600 to-emerald-600 text-white"; // light gradient header
-
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${headerBgClass} ${
-          scrolled ? "backdrop-blur-sm shadow-2xl border-b border-gray-200/10 dark:border-gray-700/30" : ""
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300
+          ${darkMode ? "bg-gray-900 text-white" : "bg-gradient-to-r from-green-600 to-emerald-600 text-white"}
+          ${scrolled ? "backdrop-blur-sm shadow-2xl border-b border-gray-200/10 dark:border-gray-700/30" : ""}
+        `}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 lg:h-20">
+
             {/* Logo */}
             <div className="flex items-center space-x-3 lg:space-x-4">
               <div className={`relative rounded-2xl p-2 ${darkMode ? "bg-gray-800/60" : "bg-white/10"}`}>
@@ -90,7 +71,7 @@ export default function Header() {
                   >
                     <Icon size={16} className="flex-shrink-0" />
                     <span>{link.name}</span>
-                    {isActive && <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-6 h-1 rounded-full bg-yellow-300" />}
+                    {isActive && <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-6 h-1 rounded-full bg-yellow-300 animate-pulse" />}
                   </NavLink>
                 );
               })}
@@ -102,9 +83,9 @@ export default function Header() {
                 className="ml-3 relative w-14 h-7 flex items-center rounded-full p-1 transition-transform shadow-lg bg-white/10"
               >
                 <div
-                  className={`w-6 h-6 rounded-full bg-white flex items-center justify-center transform transition-all duration-300 ${
-                    darkMode ? "translate-x-7 bg-gray-800 text-yellow-300" : "translate-x-0 bg-yellow-300 text-white"
-                  }`}
+                  className={`w-6 h-6 rounded-full flex items-center justify-center transform transition-all duration-300
+                    ${darkMode ? "translate-x-7 bg-gray-800 text-yellow-300" : "translate-x-0 bg-yellow-300 text-white"}
+                  `}
                 >
                   {darkMode ? <Moon size={12} /> : <Sun size={12} />}
                 </div>
@@ -133,10 +114,7 @@ export default function Header() {
         </div>
 
         {/* Mobile menu */}
-        <div
-          className={`lg:hidden ${menuOpen ? "block" : "hidden"} px-4 pb-6 bg-opacity-90`}
-          role="menu"
-        >
+        <div className={`lg:hidden ${menuOpen ? "block" : "hidden"} px-4 pb-6 bg-opacity-90`}>
           <div className="px-2 pt-4 space-y-3">
             {navLinks.map((link) => {
               const Icon = link.icon;
@@ -162,7 +140,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* spacer so content doesn't hide under fixed header */}
+      {/* spacer */}
       <div className="h-16 lg:h-20" />
     </>
   );
